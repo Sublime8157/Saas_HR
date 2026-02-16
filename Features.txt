@@ -1,0 +1,72 @@
+✅ Core Features for Your HR Management Practice Project
+🔐 1. Authentication & Authorization
+User registration (Admin creates company account)
+Login / Logout
+Password hashing (bcrypt)
+JWT authentication
+Role-based access (Admin / Employee)
+Protected routes (frontend + backend)
+Profile page (update name, password)
+
+👥 2. Employee Management
+Add employee
+Edit employee
+Delete employee
+View employee list
+Search employees
+Assign department & position
+Store salary
+Upload profile photo (optional but good practice)
+
+🏢 3. Department Management
+Create department
+Edit department
+Delete department
+Assign employees to department
+
+🗓 4. Leave Management
+Apply for leave (Employee)
+View leave history
+Approve / Reject leave (Admin)
+Leave status (Pending / Approved / Rejected)
+Leave balance tracking
+
+⏰ 5. Attendance System
+Clock In
+Clock Out
+View attendance history
+Calculate total hours worked
+Admin can view all employees’ attendance
+
+💰 6. Basic Payroll (Simple Version)
+Store employee salary
+Calculate monthly pay (basic logic)
+Generate payslip (simple PDF or summary page)
+View salary history
+
+📊 7. Dashboard
+For Admin:
+Total employees
+Employees on leave
+Pending leave requests
+Attendance summary
+
+For Employee:
+My leave balance
+My attendance summary
+My salary info
+
+⚙️ 8. Multi-Tenant (Optional but Powerful Practice)
+Each company has its own data
+Company ID attached to all records
+Data isolation
+This will seriously level up your backend architecture skills.
+
+🧠 Bonus Practice Features (If You Want More Challenge)
+Pagination on employee list
+Filtering (by department)
+Email notification when leave is approved
+Activity logs
+Dark mode toggle
+CSV export of employees
+REST API documentation (Swagger)
