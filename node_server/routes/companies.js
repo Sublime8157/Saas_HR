@@ -30,18 +30,50 @@ router.post('/addCompanies', async (req, res) => {
 })
 
 router.get('/', async (req, res) => {
-    const cols = ['name', 'active','email', 'code'] // columns to fetch
-    const result = await Company.findByColumns(cols).asc('id').execute()
-    
-    res.status(200).json(result)
-    
+    try{
+        const cols = ['name', 'active','email', 'code'] // columns to fetch
+        const result = await Company.findByColumns(cols).asc('id').execute()
+        res.status(200).json(result)
+    }
+    catch(error){
+        res.status(500).json({ error: error.message })
+    }
 })
 
-router.get('/getCompany', async(req, res) => {
-    const { Code } = req.body
-    const result = await Company.findCompany(Code)
-    
-    res.status(200).json(result)
+router.get('/getCompany/:code', async(req, res) => {
+    try{
+        const { code } = req.params
+        const result = await Company.find('code', code)
+        res.status(200).json(result)
+    } 
+    catch (error){
+        res.status(500).json({ error: error.message })
+    }
 })
+
+router.patch('/editCompany/:code', async (req, res) => {
+    try{
+        const { data } = req.body
+        const { code } = req.params
+
+        const result = await Company
+            .update(data)
+            .where('code', code)
+            .execute()
+
+        if(common.isBlank(result.length)){
+            return res.status(404).json({ error: `Company code: '${code}' does not exist` })
+        }
+
+        res.status(200).json(result)
+    } 
+    catch (error){
+        res.status(500).json({ error: error.message })
+    }
+})
+
+// router.post('/companyLogin', async(req, res) => {
+    
+// })
 
 export default router

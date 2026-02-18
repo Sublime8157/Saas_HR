@@ -21,10 +21,15 @@ export default class Base {
         return new queryBuilder.Select(this.tableName, columns)
     }
 
-    async findCompany(code){
-        const query = `SELECT * FROM ${this.tableName} WHERE code = '${code}'` 
-        const result = await pool.query(query)
+    async find(column, value){
+        const query = `SELECT * FROM ${this.tableName} WHERE ${column} = $1` 
+        const result = await pool.query(query, [value])
         
         return result.rows
     }
+    
+    update(data){
+        return new queryBuilder.Update(this.tableName, data)
+    }
+    
 }
