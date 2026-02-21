@@ -4,7 +4,7 @@ import common from '../helpers/common.js'
 
 const router = express.Router()
 
-router.post('/addCompanies', async (req, res) => {
+router.post('/addCompany', async (req, res) => {
     const { name, code,  email, active } = req.body
     const requiredFields = [ 'name', 'code',  'email', 'active' ]
     
