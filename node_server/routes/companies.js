@@ -72,8 +72,17 @@ router.patch('/editCompany/:code', async (req, res) => {
     }
 })
 
-// router.post('/companyLogin', async(req, res) => {
+router.delete('/deleteCompany', async (req, res) => {
+    try {
+        const { where } = req.body
+        const result = await Company.delete().where(where).execute()
+
+        res.status(200).json(result)
+    }
+    catch (error){
+        res.status(500).json({ error: error.message })
+    }
     
-// })
+})
 
 export default router

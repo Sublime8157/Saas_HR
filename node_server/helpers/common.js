@@ -5,6 +5,12 @@ const isBlank = (item) => {
     return false
 }
 
+const IDENT_RE = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+function ident(name) {
+  if (!IDENT_RE.test(name)) throw new Error(`Unsafe identifier: ${name}`);
+  return `"${name}"`;
+}
+
 export default {
-    isBlank
+    isBlank, ident
 }

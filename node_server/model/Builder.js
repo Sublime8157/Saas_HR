@@ -1,4 +1,5 @@
 import Pool from '../db/index.js'
+import Common from '../helpers/common.js'
 
 class Select {
     constructor(tableName, columns) {
@@ -80,6 +81,43 @@ class Update {
     
 }
 
+class Delete {
+    constructor(tableName) {
+        this.tableName = tableName
+        this.whereClause = null
+        this.expre = null
+    }
+
+    where(where){
+        this.whereClause = where
+        return this 
+    }
+    
+    expression(expression){
+        this.expre = null
+        return this
+    }
+    
+    async execute(){
+        const keys = Object.keys(this.whereClause)
+        const values = Object.values(this.whereClause)
+        
+        if(!keys.length) throw new Error('Refusing to delete missing WHERE clause');
+        
+        const where = keys 
+            .map((col, i) => `${Common.ident(col)} = $${i + 1}`)
+            .join(' AND ')
+            
+        const query = `
+            DELETE FROM ${Common.ident(this.tableName)} 
+            WHERE ${where} RETURNING *`             
+        
+        const result = await Pool.query(query, values)
+        return result.rows
+
+    }
+}
+
 export default {
-    Select, Update
+    Select, Update, Delete
 }

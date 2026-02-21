@@ -31,5 +31,9 @@ export default class Base {
     update(data){
         return new queryBuilder.Update(this.tableName, data)
     }
+
+    delete(where){
+        return new queryBuilder.Delete(this.tableName, where)
+    }
     
 }
