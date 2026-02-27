@@ -1,5 +1,6 @@
 import Search from "../../components/form/SearchInput.jsx";
 import InputText from "../../components/form/InputText.jsx";
+import Loading from "../../components/ShowLoadingBox.jsx";
 import MessageBox from "../../components/MessageBox.jsx";
 import { useEffect, useMemo, useState } from "react";
 import Button from "../../components/Button.jsx";
@@ -17,11 +18,22 @@ const AdminPage = () => {
   const [search, setSearch] = useState("");
   const [showAddCompany, setShowAddCompany] = useState(false);
   const [isNewData, setIsNewData] = useState(false);
-  const [showSubmitResult, setShowSubmitResult] = useState(false);
   const [formResponse, setFormResponse] = useState({
     message: "",
     success: false,
   });
+
+  const [showLoadingMessage, setShowLoadingMessage] = useState("fetching");
+  useEffect(() => {
+    // disable scroll while fetching
+    document.body.style.overflow =
+      showLoadingMessage === "fetching" ||
+      showLoadingMessage ===  "submitting" 
+      ? "hidden" : "auto";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [showLoadingMessage]);
 
   const initialFormState = {
     name: "",
@@ -43,32 +55,32 @@ const AdminPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    setShowLoadingMessage("submitting");
     try {
+      formData.code = formData.code.trim().toLowerCase().replace(/\s+/g, "_");
       const res = await API.post("/companies/addCompany", formData);
       if (res.status === 201) {
-        setFormData(initialFormState);
-        setIsNewData((prev) => !prev);
         setFormResponse({
-          message: res.message,
+          message: res.data.message,
           success: true,
         });
-        setShowSubmitResult((prev) => !prev)
-      } else if (res.status === 500) {
-        setFormResponse({
-          message: res.message,
-          success: false,
-        });
+
+        setFormData(initialFormState);
+        setIsNewData((prev) => !prev);
       }
+      setShowLoadingMessage("idle");
     } catch (error) {
-      console.log(error.message);
+      setFormResponse({
+        message: error.response?.data?.message || "Request failed",
+        success: false,
+      });
+      setShowLoadingMessage("idle");
     }
   };
 
   // Fetch companies + build columns dynamically
   useEffect(() => {
     const controller = new AbortController();
-
     const fetchCompanies = async () => {
       try {
         const res = await API.get("/companies", { signal: controller.signal });
@@ -84,16 +96,27 @@ const AdminPage = () => {
           setAllColumnKeys([]);
           setSelectedColumnKeys([]);
         }
+        setShowLoadingMessage("idle");
       } catch (err) {
         if (err?.name !== "CanceledError" && err?.name !== "AbortError") {
           console.error(err);
         }
+        setShowLoadingMessage("idle");
       }
     };
 
     fetchCompanies();
     return () => controller.abort();
   }, [isNewData]);
+
+  useEffect(() => {
+    if (!showAddCompany) {
+      setFormResponse({
+        message: "",
+        success: false,
+      });
+    }
+  }, [showAddCompany]);
 
   const safeToggleColumn = (key) => {
     setSelectedColumnKeys((prev) => {
@@ -146,8 +169,6 @@ const AdminPage = () => {
       .replace(/_/g, " ")
       .replace(/([a-z])([A-Z])/g, "$1 $2")
       .replace(/\b\w/g, (c) => c.toUpperCase());
-
-  const clearSearch = () => setSearch("");
 
   return (
     <main className="min-h-screen w-full bg-gray-50">
@@ -218,12 +239,16 @@ const AdminPage = () => {
             onClose={() => setShowAddCompany(false)}
             variant="medium"
           >
+            {showLoadingMessage === "submitting" && (
+              <Loading message="Submitting form"></Loading>
+            )}
             <div className="gap-2 flex flex-col justify-between">
               <div className="flex items-center flex-row justify-between">
                 <div className="font-bold">Add Company</div>
                 <Close onClick={() => setShowAddCompany(false)}></Close>
               </div>
               {/* Info box */}
+
               {formResponse.message && (
                 <MessageBox type={formResponse.success ? "success" : "error"}>
                   {formResponse.message}
@@ -275,7 +300,6 @@ const AdminPage = () => {
                     Pick which fields appear in the table.
                   </div>
                 </div>
-
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
@@ -299,7 +323,6 @@ const AdminPage = () => {
                   </Button>
                 </div>
               </div>
-
               <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                 {allColumnKeys.map((key) => {
                   const checked = selectedColumnKeys.includes(key);
@@ -326,12 +349,15 @@ const AdminPage = () => {
           )}
         </div>
 
+        {showLoadingMessage === "fetching" && (
+          <Loading message="Fetching companies"></Loading>
+        )}
         {/* Table Card */}
         <div className="mt-6 rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          {/* Sticky header */}
+          {/*header */}
           <div className="overflow-x-auto">
-            <div className="min-w-max">
-              <div className="sticky top-0 z-10 bg-blue-50">
+            <div className=" min-w-max">
+              <div className="top-0 z-10 bg-blue-50">
                 <div className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 flex gap-6">
                   {selectedColumns.map((key) => (
                     <div key={key} className="min-w-40">
@@ -343,10 +369,10 @@ const AdminPage = () => {
 
               <HR />
 
-              <div className="divide-y">
+              <div className=" divide-y">
                 {filteredCompanies.map((row, idx) => (
                   <div
-                    key={row.code ?? row.id ?? idx}
+                    key={row.id ?? idx}
                     className={`border-none px-5 py-3 text-sm flex gap-6 transition ${idx % 2 == 0 ? "bg-white" : "bg-blue-50"}`}
                   >
                     {selectedColumns.map((key) => (

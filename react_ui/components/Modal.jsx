@@ -29,7 +29,7 @@ const Modal = ({
   return (
     <div className="fixed inset-0 z-40" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40"></div>
-      <div className="relative h-full-w-full flex items-center justify-center p-4">
+      <div className="relative h-full w-full flex items-center justify-center p-4">
         <div
           className={`p-6 rounded-2xl bg-white shadow-xl border border-gray-100 ${variants[variant]}`}
           onClick={(e) => e.stopPropagation()}

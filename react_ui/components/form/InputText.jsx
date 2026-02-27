@@ -21,6 +21,7 @@ const Input = ({
         required={isRequired}
         onChange={onChange}
         value={value}
+        autocomplete="off"
       ></input>
     </div>
   );

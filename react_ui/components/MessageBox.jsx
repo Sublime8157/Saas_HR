@@ -1,16 +1,17 @@
 const MessageBox = ({
     children = "",
     type = "success",
+    className = "",
 }) => {
 
     const types = {
-        error: "", 
-        success: "text-center shadow-sm transition text-xs bg-orange-400 rounded-sm p-2 text-white", 
+        error: "border border-red-500 bg-red-300", 
+        success: "border-yellow-600 bg-yellow-300", 
         info: ""
     }
 
     return(
-        <div className={types[type]}>
+        <div className={`text-center shadow-sm transition text-xs rounded-sm p-2 ${types[type]} ${className}`}>
             {children}
         </div>
     )
