@@ -1,13 +1,10 @@
 import Search from "../../components/form/SearchInput.jsx";
-import InputText from "../../components/form/InputText.jsx";
 import Loading from "../../components/ShowLoadingBox.jsx";
-import MessageBox from "../../components/MessageBox.jsx";
 import { useEffect, useMemo, useState } from "react";
 import Button from "../../components/Button.jsx";
-import Modal from "../../components/Modal.jsx";
-import Close from "../../components/Close.jsx";
 import API from "../../services/api.js";
 import HR from "../../components/HR";
+import CompanyForm from "../../components/form/CompanyForm.jsx";
 
 const AdminPage = () => {
   const [companies, setCompanies] = useState([]);
@@ -27,56 +24,13 @@ const AdminPage = () => {
   useEffect(() => {
     // disable scroll while fetching
     document.body.style.overflow =
-      showLoadingMessage === "fetching" ||
-      showLoadingMessage ===  "submitting" 
-      ? "hidden" : "auto";
+      showLoadingMessage === "fetching" || showLoadingMessage === "submitting"
+        ? "hidden"
+        : "auto";
     return () => {
       document.body.style.overflow = "auto";
     };
   }, [showLoadingMessage]);
-
-  const initialFormState = {
-    name: "",
-    code: "",
-    address: "",
-    email: "",
-    active: false,
-  };
-  const [formData, setFormData] = useState(initialFormState);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setShowLoadingMessage("submitting");
-    try {
-      formData.code = formData.code.trim().toLowerCase().replace(/\s+/g, "_");
-      const res = await API.post("/companies/addCompany", formData);
-      if (res.status === 201) {
-        setFormResponse({
-          message: res.data.message,
-          success: true,
-        });
-
-        setFormData(initialFormState);
-        setIsNewData((prev) => !prev);
-      }
-      setShowLoadingMessage("idle");
-    } catch (error) {
-      setFormResponse({
-        message: error.response?.data?.message || "Request failed",
-        success: false,
-      });
-      setShowLoadingMessage("idle");
-    }
-  };
 
   // Fetch companies + build columns dynamically
   useEffect(() => {
@@ -170,6 +124,63 @@ const AdminPage = () => {
       .replace(/([a-z])([A-Z])/g, "$1 $2")
       .replace(/\b\w/g, (c) => c.toUpperCase());
 
+  const [showForm, setShowForm] = useState(false);
+  const [formMode, setFormMode] = useState("add");
+  const [editingCompany, setEditingCompany] = useState(null);
+
+  useEffect(() => {
+    if(!showForm){
+      setFormResponse({
+        message: "", 
+        success: false
+      })
+    }
+  }, [showForm])
+  
+  const handleSubmitCompany = async (payload) => {
+    try{
+      let response = ''
+      setShowLoadingMessage("submitting")
+      if (formMode === "add") {
+        response = await API.post("/companies/addCompany",  payload);
+      } else {
+        response = await API.put(`/companies/editCompany/${editingCompany.code}`, {data: payload});
+      }
+
+      if(response.status === 201 || response.status === 200){
+        setFormResponse({
+          message: response.data.message,
+          success: true
+        })
+      }
+      
+    } catch(error){
+      setFormResponse({
+        message: error.response?.data.message || 'Request Failed',
+        success: false
+      })
+    } 
+    setShowLoadingMessage("idle")
+    setIsNewData(true);
+  };
+
+  const openAdd = () => {
+    setFormMode("add");
+    setEditingCompany(null);
+    setShowForm(true);
+  };
+
+  const openEdit = (row) => {
+    setFormMode("edit");
+    setEditingCompany(row);
+    setShowForm(true);
+  };
+
+  const [selectedRow, setSelectedRow] = useState(null);
+  const handleRowClick = (id) => {
+    setSelectedRow(id);
+  };
+
   return (
     <main className="min-h-screen w-full bg-gray-50">
       <div className="mx-auto max-w-6xl py-10">
@@ -224,70 +235,22 @@ const AdminPage = () => {
               />
             </div>
             <div className="flex flex-row gap-2">
-              <Button
-                onClick={() => setShowAddCompany((v) => !v)}
-                className="text-xs"
-              >
+              <Button onClick={openAdd} className="text-xs">
                 Add Company
               </Button>
               <Button className="text-xs">Generate Password</Button>
             </div>
           </div>
           {/* Add Company Form  */}
-          <Modal
-            open={showAddCompany}
-            onClose={() => setShowAddCompany(false)}
-            variant="medium"
-          >
-            {showLoadingMessage === "submitting" && (
-              <Loading message="Submitting form"></Loading>
-            )}
-            <div className="gap-2 flex flex-col justify-between">
-              <div className="flex items-center flex-row justify-between">
-                <div className="font-bold">Add Company</div>
-                <Close onClick={() => setShowAddCompany(false)}></Close>
-              </div>
-              {/* Info box */}
-
-              {formResponse.message && (
-                <MessageBox type={formResponse.success ? "success" : "error"}>
-                  {formResponse.message}
-                </MessageBox>
-              )}
-              <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-                <InputText
-                  label="Name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  isRequired
-                ></InputText>
-                <InputText
-                  label="Code"
-                  name="code"
-                  value={formData.code}
-                  onChange={handleChange}
-                  isRequired
-                ></InputText>
-                <InputText
-                  label="Address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                ></InputText>
-                <InputText
-                  label="Email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  isRequired
-                ></InputText>
-                <Button variant="primary" className="mt-2">
-                  Submit
-                </Button>
-              </form>
-            </div>
-          </Modal>
+          <CompanyForm
+            open={showForm}
+            onClose={() => setShowForm(false)}
+            mode={formMode}
+            initialValue={editingCompany || undefined}
+            onSubmit={handleSubmitCompany}
+            loadingState={showLoadingMessage}
+            formResponse={formResponse}
+          ></CompanyForm>
           {/* Filtering Panel */}
           {showFiltering && (
             <div className="bg-gray-100 shadow-inner p-4 mt-5 rounded-xl">
@@ -373,7 +336,16 @@ const AdminPage = () => {
                 {filteredCompanies.map((row, idx) => (
                   <div
                     key={row.id ?? idx}
-                    className={`border-none px-5 py-3 text-sm flex gap-6 transition ${idx % 2 == 0 ? "bg-white" : "bg-blue-50"}`}
+                    className={`border-none px-5 py-3 
+                      ${
+                        row.id === selectedRow
+                          ? "bg-blue-400 text-white"
+                          : idx % 2 == 0
+                            ? "bg-white"
+                            : "bg-blue-50"
+                      } text-sm flex gap-6 cursor-pointer transition`}
+                    onClick={() => handleRowClick(row.id)}
+                    onDoubleClick={() => openEdit(row)}
                   >
                     {selectedColumns.map((key) => (
                       <div key={key} className="min-w-40 text-gray-800">

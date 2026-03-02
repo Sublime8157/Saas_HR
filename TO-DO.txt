@@ -1,1 +1,3 @@
 Next Task: Support the message box dynamically
+2/26/2026: Fix the loading state
+2/27/2026: Support Update / Delete

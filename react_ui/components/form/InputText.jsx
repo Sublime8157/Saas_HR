@@ -6,6 +6,7 @@ const Input = ({
   isRequired = false,
   onChange,
   value,
+  disable
 }) => {
   return (
     <div className="flex flex-col w-full">
@@ -21,6 +22,7 @@ const Input = ({
         required={isRequired}
         onChange={onChange}
         value={value}
+        disabled={disable}
         autocomplete="off"
       ></input>
     </div>

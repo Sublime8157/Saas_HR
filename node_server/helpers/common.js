@@ -1,5 +1,5 @@
 const isBlank = (item) => {
-    if(item === ' ' || item === '' || item === undefined || item === 0 || item === NaN){
+    if(item === ' ' || item === '' || item === undefined || item === 0 || item === NaN || item.length === 0){
         return true
     }
     return false
