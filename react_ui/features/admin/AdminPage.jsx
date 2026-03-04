@@ -5,6 +5,8 @@ import Button from "../../components/Button.jsx";
 import API from "../../services/api.js";
 import HR from "../../components/HR";
 import CompanyForm from "../../components/form/CompanyForm.jsx";
+import Modal from "../../components/Modal.jsx";
+import Info from "../../components/form/InformationMessage.jsx";
 
 const AdminPage = () => {
   const [companies, setCompanies] = useState([]);
@@ -129,38 +131,41 @@ const AdminPage = () => {
   const [editingCompany, setEditingCompany] = useState(null);
 
   useEffect(() => {
-    if(!showForm){
+    if (!showForm) {
       setFormResponse({
-        message: "", 
-        success: false
-      })
+        message: "",
+        success: false,
+      });
     }
-  }, [showForm])
-  
+  }, [showForm]);
+
   const handleSubmitCompany = async (payload) => {
-    try{
-      let response = ''
-      setShowLoadingMessage("submitting")
+    try {
+      setIsNewData(false);
+      let response = "";
+      setShowLoadingMessage("submitting");
       if (formMode === "add") {
-        response = await API.post("/companies/addCompany",  payload);
+        response = await API.post("/companies/addCompany", payload);
       } else {
-        response = await API.put(`/companies/editCompany/${editingCompany.code}`, {data: payload});
+        response = await API.put(
+          `/companies/editCompany/${editingCompany.code}`,
+          { data: payload },
+        );
       }
 
-      if(response.status === 201 || response.status === 200){
+      if (response.status === 201 || response.status === 200) {
         setFormResponse({
           message: response.data.message,
-          success: true
-        })
+          success: true,
+        });
       }
-      
-    } catch(error){
+    } catch (error) {
       setFormResponse({
-        message: error.response?.data.message || 'Request Failed',
-        success: false
-      })
-    } 
-    setShowLoadingMessage("idle")
+        message: error.response?.data.message || "Request Failed",
+        success: false,
+      });
+    }
+    setShowLoadingMessage("idle");
     setIsNewData(true);
   };
 
@@ -179,6 +184,24 @@ const AdminPage = () => {
   const [selectedRow, setSelectedRow] = useState(null);
   const handleRowClick = (id) => {
     setSelectedRow(id);
+  };
+
+  const [showConfirmationBox, setShowConfirmationBox] = useState(false);
+  const handleDelete = async (id) => {
+    try {
+      const res = await API.delete(`/companies/deleteCompany/${id}`);
+      
+      if (res.status === 200) {
+        setIsNewData((prev) => !prev);
+        setShowConfirmationBox(false);
+      } 
+
+    } catch (error) {
+      setFormResponse({
+        message: error.response?.data.message || "Request Failed",
+        success: false,
+      });
+    }
   };
 
   return (
@@ -331,7 +354,13 @@ const AdminPage = () => {
               </div>
 
               <HR />
-
+              <Info
+                open={showConfirmationBox}
+                onClose={() => setShowConfirmationBox(false)}
+                header="Delete Company"
+                message="This action will permanently delete this company. Continue?"
+                onConfirm={() => handleDelete(selectedRow)}
+              ></Info>
               <div className=" divide-y">
                 {filteredCompanies.map((row, idx) => (
                   <div
@@ -348,13 +377,18 @@ const AdminPage = () => {
                     onDoubleClick={() => openEdit(row)}
                   >
                     {selectedColumns.map((key) => (
-                      <div key={key} className="min-w-40 text-gray-800">
+                      <div key={key} className="min-w-40 text-xs text-gray-800">
                         {formatCell(key, row[key])}
                       </div>
                     ))}
+                    <div
+                      className=""
+                      onClick={() => setShowConfirmationBox((prev) => !prev)}
+                    >
+                      <ion-icon name="trash-outline"></ion-icon>
+                    </div>
                   </div>
                 ))}
-
                 {filteredCompanies.length === 0 && (
                   <div className="px-5 py-10 text-sm text-gray-500">
                     No results found.

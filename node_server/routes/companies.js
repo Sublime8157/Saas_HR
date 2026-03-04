@@ -87,10 +87,10 @@ router.put("/editCompany/:code", async (req, res) => {
   }
 });
 
-router.delete("/deleteCompany", async (req, res) => {
+router.delete("/deleteCompany/:id", async (req, res) => {
   try {
-    const { where } = req.body;
-    const result = await Company.delete().where(where).execute();
+    const { id } = req.params;
+    const result = await Company.delete().where({id: id }).execute();
 
     res.status(200).json(result);
   } catch (error) {
