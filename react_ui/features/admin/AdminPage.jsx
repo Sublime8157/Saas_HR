@@ -384,7 +384,7 @@ const AdminPage = () => {
           <Loading message="Fetching companies"></Loading>
         )}
         {/* Table Card */}
-        <div className="mt-6 rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="mt-6 rounded-2xl shadow-sm border max-h-100 border-gray-100 overflow-auto">
           {/*header */}
           <div className="overflow-x-auto">
             <div className=" min-w-max">
