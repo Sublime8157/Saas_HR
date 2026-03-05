@@ -68,6 +68,8 @@ router.put("/editCompany/:code", async (req, res) => {
     const { data } = req.body;
     const { code } = req.params;
 
+    delete data.id
+    
     const result = await Company.update(data).where("code", code).execute();
     const validate = validateEmpty(data);
 
@@ -81,7 +83,9 @@ router.put("/editCompany/:code", async (req, res) => {
         .json({ error: `Company code: '${code}' does not exist` });
     }
 
-    res.status(200).json(result);
+    res.status(200).json({
+      message: "Record updated successfully!"
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

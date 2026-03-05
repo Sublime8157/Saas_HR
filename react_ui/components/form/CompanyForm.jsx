@@ -1,17 +1,18 @@
 import { useState, useEffect } from "react";
 import Modal from "../Modal";
 import Close from "../Close";
-import InputText from "./InputText"
-import Button from "../Button"
-import MessageBox from "../MessageBox"
-import Loading from "../ShowLoadingBox"
+import InputText from "./InputText";
+import Button from "../Button";
+import MessageBox from "../MessageBox";
+import Loading from "../ShowLoadingBox";
+import CheckBox from "../form/InputCheckbox";
 
 const emptyCompany = {
   name: "",
   code: "",
   address: "",
   email: "",
-  active: false
+  active: false,
 };
 
 const CompanyForm = ({
@@ -24,7 +25,7 @@ const CompanyForm = ({
   formResponse = { success: false, message: "" },
 }) => {
   const [formData, setFormData] = useState(emptyCompany);
-
+  
   useEffect(() => {
     if (open) {
       setFormData({ ...emptyCompany, ...initialValue });
@@ -32,8 +33,8 @@ const CompanyForm = ({
   }, [open, initialValue]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((p) => ({ ...p, [name]: value }));
+    const { name, type, checked, value } = e.target;
+    setFormData((p) => ({ ...p, [name]: type === "checkbox" ? checked : value }));
   };
 
   const handleSubmit = async (e) => {
@@ -41,15 +42,11 @@ const CompanyForm = ({
     await onSubmit(formData);
   };
 
-  const disableForm = formResponse.success
-  
+  const disableForm = formResponse.success;
+
   const title = mode === "edit" ? "Update Company" : "Add Company";
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      variant="medium"
-    >
+    <Modal open={open} onClose={onClose} variant="medium">
       {loadingState === "submitting" && (
         <Loading message="Submitting form"></Loading>
       )}
@@ -97,7 +94,14 @@ const CompanyForm = ({
             disable={disableForm}
             isRequired
           ></InputText>
-          <Button variant="primary" className="mt-2"  disabled={disableForm}>
+          <CheckBox
+            label="Active"
+            name="active"
+            checked={formData.active}
+            onChange={handleChange}
+            isRequired
+          ></CheckBox>
+          <Button variant="primary" className="mt-2" disabled={disableForm}>
             Submit
           </Button>
         </form>
