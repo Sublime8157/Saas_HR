@@ -5,7 +5,6 @@ import Button from "../../components/Button.jsx";
 import API from "../../services/api.js";
 import HR from "../../components/HR";
 import CompanyForm from "../../components/form/CompanyForm.jsx";
-import Modal from "../../components/Modal.jsx";
 import Info from "../../components/form/InformationMessage.jsx";
 
 const AdminPage = () => {
@@ -84,10 +83,21 @@ const AdminPage = () => {
     });
   };
 
-  const filteredCompanies = useMemo(() => {
+  const [sortKey, setSortKey] = useState(null);
+  const [isAsc, setIsAsc] = useState(false);
+
+  const handleChevronClick = (key) => {
+    const isSame = sortKey === key
+
+    setSortKey(key)
+    setIsAsc((prev) => (isSame ? !prev : true))
+
+  };
+
+  const visibleCompanies = useMemo(() => {
     const q = search.trim().toLowerCase();
 
-    return companies.filter((c) => {
+    const searched = companies.filter((c) => {
       if (!q) return true;
 
       return Object.values(c).some((val) =>
@@ -96,7 +106,44 @@ const AdminPage = () => {
           .includes(q),
       );
     });
-  }, [companies, search]);
+    if (!sortKey || !isAsc) return searched;
+
+    const normalize = (v) => {
+      if (v == null) return null;
+
+      // if ACTIVE is stored as boolean
+      if (typeof v === "boolean") return v ? 1 : 0;
+
+      // if ACTIVE is stored as "Yes"/"No"
+      if (typeof v === "string") {
+        const s = v.trim().toLowerCase();
+        if (s === "yes") return 1;
+        if (s === "no") return 0;
+        return s;
+      }
+
+      // numeric sort if number-like
+      if (typeof v === "number") return v;
+
+      const num = Number(v);
+      if (!Number.isNaN(num) && String(v).trim() !== "") return num;
+
+      return String(v).toLowerCase();
+    };
+
+    return [...searched].sort((a, b) => {
+      const A = normalize(a?.[sortKey]);
+      const B = normalize(b?.[sortKey]);
+
+      // nulls bottom
+      if (A == null && B == null) return 0;
+      if (A == null) return 1;
+      if (B == null) return -1;
+
+      if (typeof A === "number" && typeof B === "number") return A - B;
+      return String(A).localeCompare(String(B));
+    });
+  }, [companies, search, sortKey, isAsc]);
 
   const selectedColumns = useMemo(() => {
     const set = new Set(selectedColumnKeys);
@@ -190,12 +237,11 @@ const AdminPage = () => {
   const handleDelete = async (id) => {
     try {
       const res = await API.delete(`/companies/deleteCompany/${id}`);
-      
+
       if (res.status === 200) {
         setIsNewData((prev) => !prev);
         setShowConfirmationBox(false);
-      } 
-
+      }
     } catch (error) {
       setFormResponse({
         message: error.response?.data.message || "Request Failed",
@@ -203,7 +249,6 @@ const AdminPage = () => {
       });
     }
   };
-
   return (
     <main className="min-h-screen w-full bg-gray-50">
       <div className="mx-auto max-w-6xl py-10">
@@ -221,8 +266,8 @@ const AdminPage = () => {
 
             <div className="flex items-center gap-3">
               <div className="text-xs text-gray-500">
-                {filteredCompanies.length} result
-                {filteredCompanies.length !== 1 ? "s" : ""}
+                {visibleCompanies.length} result
+                {visibleCompanies.length !== 1 ? "s" : ""}
               </div>
 
               {/* Modern toggle for filters */}
@@ -346,8 +391,17 @@ const AdminPage = () => {
               <div className="top-0 z-10 bg-blue-50">
                 <div className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 flex gap-6">
                   {selectedColumns.map((key) => (
-                    <div key={key} className="min-w-40">
-                      {prettifyLabel(key)}
+                    <div
+                      key={key}
+                      className="min-w-40 flex flex-row items-cente gap-1"
+                    >
+                      <div>{prettifyLabel(key)}</div>
+                      <span
+                        onClick={() => handleChevronClick(key)}
+                        className={`transition-transform cursor-pointer duration-200 ${sortKey === key && isAsc ? "rotate-180" : "rotate-0"}`}
+                      >
+                        <ion-icon name="chevron-down-outline"></ion-icon>
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -362,7 +416,7 @@ const AdminPage = () => {
                 onConfirm={() => handleDelete(selectedRow)}
               ></Info>
               <div className=" divide-y">
-                {filteredCompanies.map((row, idx) => (
+                {visibleCompanies.map((row, idx) => (
                   <div
                     key={row.id ?? idx}
                     className={`border-none px-5 py-3 
@@ -389,7 +443,7 @@ const AdminPage = () => {
                     </div>
                   </div>
                 ))}
-                {filteredCompanies.length === 0 && (
+                {visibleCompanies.length === 0 && (
                   <div className="px-5 py-10 text-sm text-gray-500">
                     No results found.
                   </div>
